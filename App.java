@@ -21,16 +21,10 @@ public class App {
         bpTree.getNode(c2);
         System.out.println();
 
-        for (int i = -3; i < 30; i += 4) {
-            System.out.println(i + "찾기");
-            bpTree.getNode(i);
-            System.out.println();
-        }
+        bpTree.inorderTraverse();
 
-//		bpTree.inorderTraverse();
-//
-//		System.out.println("Assignment 5: ");
-//
+        System.out.println("Assignment 5: ");
+
 //		ArrayList<Integer> values = new ArrayList<Integer>();
 //		Iterator<Integer> iterator = bpTree.iterator();
 //		while(iterator.hasNext()) {

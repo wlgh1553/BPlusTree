@@ -14,11 +14,11 @@ public class MyBPlusTree implements NavigableSet<Integer> {
     // Data Abstraction은 예시일 뿐 자유롭게 B+ Tree의 범주 안에서 어느정도 수정가능
     private MyBPlusTreeNode root;
     private LinkedList<MyBPlusTreeNode> leafList;
-
     private int m;
 
     public MyBPlusTree(int m) {
         this.m = m;
+        this.leafList = new LinkedList<>();
     }
 
     private int getMinKeyCnt() {
@@ -69,7 +69,11 @@ public class MyBPlusTree implements NavigableSet<Integer> {
      * 때, 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 위와 같이 출력되어야 함.
      */
     public void inorderTraverse() {
-        // TODO Auto-generated method stub
+        for (MyBPlusTreeNode node : leafList) {
+            node.showKeys();
+        }
+        //TODO 나중에 여기 ln 없애기!!
+        System.out.println();
     }
 
     @Override
@@ -139,6 +143,9 @@ public class MyBPlusTree implements NavigableSet<Integer> {
             if (isRoot) {
                 System.out.print("Root(O)");
                 root = new MyBPlusTreeNode(middleKey, leftNode, rightNode);
+                leafList.clear();
+                leafList.add(leftNode);
+                leafList.add(rightNode);
             } else {
                 System.out.print("Root(X)");
                 parent.deleteChild(node);
@@ -146,9 +153,14 @@ public class MyBPlusTree implements NavigableSet<Integer> {
                 parent.addChild(leftNode);
                 parent.addChild(rightNode);
 
+                leafList.remove(node);
+                leafList.add(leftNode);
+                leafList.add(rightNode);
+
                 if (parent.isOverflow(getMaxKeyCnt())) {
                     System.out.print("부모 노드는 overflow!\n 부모 상태:");
                     parent.tempShowInfos();
+                    this.inorderTraverse();
                     splitNode(parent);
                 }
             }
@@ -184,6 +196,7 @@ public class MyBPlusTree implements NavigableSet<Integer> {
                 if (parent.isOverflow(getMaxKeyCnt())) {
                     System.out.print("부모 노드는 overflow!\n 부모 상태:");
                     parent.tempShowInfos();
+                    this.inorderTraverse();
                     splitNode(parent);
                 }
             }
@@ -195,6 +208,7 @@ public class MyBPlusTree implements NavigableSet<Integer> {
         //빈 트리인 경우
         if (root == null) {
             root = MyBPlusTreeNode.createRootNode(e);
+            leafList.add(root);
             return true;
         }
 
@@ -216,6 +230,7 @@ public class MyBPlusTree implements NavigableSet<Integer> {
         System.out.print("트리 현황:");
         if (root != null) {
             root.tempShowInfos();
+            this.inorderTraverse();
         } else {
             System.out.println("null");
         }

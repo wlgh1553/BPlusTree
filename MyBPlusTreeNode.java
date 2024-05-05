@@ -189,6 +189,13 @@ public class MyBPlusTreeNode {
         return this.children.isEmpty();
     }
 
+    public void showKeys() {
+        //TODO 나중에 여기 ln 추가하기!!
+        this.keyList.forEach(e -> {
+            System.out.print(e + " ");
+        });
+    }
+
     public void tempShowKeys() {
         this.keyList.forEach(e -> {
             System.out.print(e + ", ");
