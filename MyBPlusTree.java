@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NavigableSet;
+import java.util.NoSuchElementException;
 import java.util.SortedSet;
 
 @SuppressWarnings("unused")
@@ -312,8 +313,48 @@ public class MyBPlusTree implements NavigableSet<Integer> {
 
     @Override
     public Iterator<Integer> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        //Iterator를 구현한 내부 클래스
+        return new MyBPlusTreeIterator();
+    }
+
+    private class MyBPlusTreeIterator implements Iterator<Integer> {
+        private Iterator<MyBPlusTreeNode> nodeIterator;
+        private MyBPlusTreeNode currentNode;
+        private int currentIdx;
+
+        public MyBPlusTreeIterator() {
+            this.nodeIterator = leafList.iterator();
+            this.currentNode = nodeIterator.hasNext() ? nodeIterator.next() : null;
+            this.currentIdx = 0;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return currentNode != null;
+        }
+
+        @Override
+        public Integer next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+
+            //현재 값
+            Integer value = currentNode.getKey(currentIdx);
+            currentIdx++;
+
+            //전부 순회했다면 다음 노드로 이동
+            if (currentIdx >= currentNode.getKeyListLength()) {
+                if (nodeIterator.hasNext()) {
+                    currentNode = nodeIterator.next();
+                    currentIdx = 0;
+                } else {
+                    currentNode = null;
+                }
+            }
+
+            return value;
+        }
     }
 
     @Override
