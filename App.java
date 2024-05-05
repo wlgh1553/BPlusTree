@@ -9,17 +9,24 @@ public class App {
         int m = 6;
         int c1 = 11;
         int c2 = 22;
-        int c3 = 31;
+        int c3 = 22;
 
         MyBPlusTree bpTree = new MyBPlusTree(m);
         for (int i = 1; i < c3; i++) {
             bpTree.add(i);
         }
-//
-//		bpTree.getNode(c1);
-//		System.out.println();
-//		bpTree.getNode(c2);
-//		System.out.println();
+
+        bpTree.getNode(c1);
+        System.out.println();
+        bpTree.getNode(c2);
+        System.out.println();
+
+        for (int i = -3; i < 30; i += 4) {
+            System.out.println(i + "찾기");
+            bpTree.getNode(i);
+            System.out.println();
+        }
+
 //		bpTree.inorderTraverse();
 //
 //		System.out.println("Assignment 5: ");

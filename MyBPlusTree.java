@@ -45,10 +45,22 @@ public class MyBPlusTree implements NavigableSet<Integer> {
      * @param key
      * @return
      */
-    public MyBPlusTree getNode(Integer key) {
-        // TODO Auto-generated method stub
-        return null;
+    public MyBPlusTreeNode getNode(Integer key) {
+        //교수님께 반환값 관련 문의드리기!
+
+        MyBPlusTreeNode pointer = root;
+        while (pointer != null && !pointer.isLeaf()) {
+            pointer = pointer.findChildNodeWithLog(key);
+        }
+
+        if (pointer == null || !pointer.hasKey(key)) {
+            System.out.println(key + " not found");
+            return null;
+        }
+        System.out.println(key + " found");
+        return pointer;
     }
+
 
     /**
      * 과제 Assignment4를 위한 메소드:

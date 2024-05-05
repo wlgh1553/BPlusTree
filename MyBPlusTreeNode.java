@@ -145,11 +145,35 @@ public class MyBPlusTreeNode {
         return this.children.get(index);
     }
 
-    public Boolean isOverflow(int maxKeyCnt) {
+    public MyBPlusTreeNode findChildNodeWithLog(int key) {
+        int index = Collections.binarySearch(keyList, key);
+        if (index < 0) {
+            index = -index - 1;
+        } else {
+            index = index + 1;
+        }
+
+        if (index == 0) {
+            System.out.println("less than " + keyList.get(index));
+        } else if (index == keyList.size()) {
+            System.out.println("larger than or equal to " + keyList.get(keyList.size() - 1));
+        } else {
+            System.out.println("larger than or equal to " + keyList.get(index - 1)
+                    + " and less than " + keyList.get(index));
+        }
+
+        return this.children.get(index);
+    }
+
+    public boolean hasKey(int key) {
+        return this.keyList.contains(key);
+    }
+
+    public boolean isOverflow(int maxKeyCnt) {
         return keyList.size() > maxKeyCnt;
     }
 
-    public Boolean isUnderflow(int minKeyCnt) {
+    public boolean isUnderflow(int minKeyCnt) {
         return keyList.size() < minKeyCnt;
     }
 
