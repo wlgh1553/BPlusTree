@@ -36,6 +36,18 @@ public class MyBPlusTreeNode {
         }
     }
 
+    private MyBPlusTreeNode(int key) {
+        //root 노드를 만들 때에만 사용하는 생성자
+        this.parent = null;
+        this.keyList = new ArrayList<>();
+        this.keyList.add(key);
+        this.children = new ArrayList<>();
+    }
+
+    public static MyBPlusTreeNode createRootNode(int key) {
+        return new MyBPlusTreeNode(key);
+    }
+
     public void deleteChild(MyBPlusTreeNode node) {
         if (this.children != null) {
             this.children.remove(node);
@@ -52,20 +64,6 @@ public class MyBPlusTreeNode {
         //이 노드에서 일부를 쪼개고, 그 쪼갠 노드를 새로 만들어 반환
         MyBPlusTreeNode newNode = new MyBPlusTreeNode(this.parent, subKeys, subChildren);
         return newNode;
-    }
-
-    public void tempShowChild() {
-        if (this.children.isEmpty()) {
-            return;
-        }
-        System.out.print("child : ");
-        this.children.forEach(e -> {
-            e.keyList.forEach(ee -> {
-                System.out.print(ee + " ");
-            });
-            System.out.print("//");
-        });
-        System.out.println();
     }
 
     public int getChildrenLength() {
@@ -117,19 +115,6 @@ public class MyBPlusTreeNode {
         this.children.add(index, child);
         child.parent = this;
     }
-
-    private MyBPlusTreeNode(int key) {
-        //root 노드를 만들 때에만 사용하는 생성자
-        this.parent = null;
-        this.keyList = new ArrayList<>();
-        this.keyList.add(key);
-        this.children = new ArrayList<>();
-    }
-
-    public static MyBPlusTreeNode createRootNode(int key) {
-        return new MyBPlusTreeNode(key);
-    }
-
 
     public int getKey(int idx) {
         return this.keyList.get(idx);
@@ -189,6 +174,15 @@ public class MyBPlusTreeNode {
         return this.children.isEmpty();
     }
 
+    public void updateKey(int from, int to) {
+        int index = Collections.binarySearch(keyList, from);
+        keyList.set(index, to);
+    }
+
+    public void removeKey(int key) {
+        keyList.remove(key);
+    }
+
     public void showKeys() {
         //TODO 나중에 여기 ln 추가하기!!
         this.keyList.forEach(e -> {
@@ -196,15 +190,9 @@ public class MyBPlusTreeNode {
         });
     }
 
-    public void tempShowKeys() {
-        this.keyList.forEach(e -> {
-            System.out.print(e + ", ");
-        });
-    }
-
     public void tempShowInfos() {
         System.out.print("나의 keys : ");
-        tempShowKeys();
+        showKeys();
         System.out.print(" 나의 parent : ");
         if (this.parent == null) {
             System.out.print("null");

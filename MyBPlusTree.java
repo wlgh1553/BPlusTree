@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.NavigableSet;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
@@ -47,8 +48,6 @@ public class MyBPlusTree implements NavigableSet<Integer> {
      * @return
      */
     public MyBPlusTreeNode getNode(Integer key) {
-        //교수님께 반환값 관련 문의드리기!
-
         MyBPlusTreeNode pointer = root;
         while (pointer != null && !pointer.isLeaf()) {
             pointer = pointer.findChildNodeWithLog(key);
@@ -79,128 +78,137 @@ public class MyBPlusTree implements NavigableSet<Integer> {
 
     @Override
     public Comparator<? super Integer> comparator() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public Integer first() {
-        // TODO Auto-generated method stub
-        return null;
+        if (leafList.isEmpty()) {
+            return null;
+        }
+        return leafList.getFirst().getKey(0);
     }
 
     @Override
     public Integer last() {
-        // TODO Auto-generated method stub
-        return null;
+        if (leafList.isEmpty()) {
+            return null;
+        }
+        MyBPlusTreeNode last = leafList.getLast();
+        return last.getKey(last.getKeyListLength() - 1);
     }
 
     @Override
     public int size() {
-        // TODO Auto-generated method stub
-        return 0;
+        return this.leafList.size();
     }
 
     @Override
     public boolean isEmpty() {
-        // TODO Auto-generated method stub
-        return false;
+        return this.leafList.isEmpty();
     }
 
     @Override
     public boolean contains(Object o) {
-        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public Object[] toArray() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-        // TODO Auto-generated method stub
         return null;
     }
 
-    private void splitNode(MyBPlusTreeNode node) {
-        boolean isRoot = (node == root);
-        int mid, middleKey;
-        MyBPlusTreeNode leftNode, rightNode;
-        MyBPlusTreeNode parent = node.getParent();
+    private void splitLeafNode(MyBPlusTreeNode node, MyBPlusTreeNode parent, boolean isRoot) {
+        //left, mid, right로 쪼개기
+        System.out.print("Leaf(O)");
+        int mid = (int) Math.ceil((m - 1) / 2.0);
+        int middleKey = node.getKey(mid);
 
-        //단말 노드인 경우 B+Tree 쪼개던 방식으로
-        if (node.isLeaf()) {
-            //left, mid, right로 쪼개기
-            System.out.print("Leaf(O)");
-            mid = (int) Math.ceil((m - 1) / 2.0);
-            middleKey = node.getKey(mid);
+        MyBPlusTreeNode leftNode = node.getSubNode(0, mid - 1);
+        MyBPlusTreeNode rightNode = node.getSubNode(mid, node.getKeyListLength() - 1);
 
-            leftNode = node.getSubNode(0, mid - 1);
-            rightNode = node.getSubNode(mid, node.getKeyListLength() - 1);
+        if (isRoot) {
+            System.out.print("Root(O)");
+            root = new MyBPlusTreeNode(middleKey, leftNode, rightNode);
+            leafList.clear();
+            leafList.add(leftNode);
+            leafList.add(rightNode);
+        } else {
+            System.out.print("Root(X)");
+            parent.deleteChild(node);
+            parent.addKey(middleKey);
+            parent.addChild(leftNode);
+            parent.addChild(rightNode);
 
-            if (isRoot) {
-                System.out.print("Root(O)");
-                root = new MyBPlusTreeNode(middleKey, leftNode, rightNode);
-                leafList.clear();
-                leafList.add(leftNode);
-                leafList.add(rightNode);
-            } else {
-                System.out.print("Root(X)");
-                parent.deleteChild(node);
-                parent.addKey(middleKey);
-                parent.addChild(leftNode);
-                parent.addChild(rightNode);
-
-                leafList.remove(node);
-                leafList.add(leftNode);
-                leafList.add(rightNode);
-
-                if (parent.isOverflow(getMaxKeyCnt())) {
-                    System.out.print("부모 노드는 overflow!\n 부모 상태:");
-                    parent.tempShowInfos();
-                    this.inorderTraverse();
-                    splitNode(parent);
+            ListIterator<MyBPlusTreeNode> iterator = leafList.listIterator();
+            while (iterator().hasNext()) {
+                MyBPlusTreeNode value = iterator.next();
+                if (value.equals(node)) {
+                    iterator.add(leftNode);
+                    iterator.add(rightNode);
+                    break;
                 }
             }
+            leafList.remove(node);
+
+            if (parent.isOverflow(getMaxKeyCnt())) {
+                System.out.print("부모 노드는 overflow!\n 부모 상태:");
+                parent.tempShowInfos();
+                this.inorderTraverse();
+                splitNode(parent);
+            }
+        }
+    }
+
+    private void splitNonLeafNode(MyBPlusTreeNode node, MyBPlusTreeNode parent, boolean isRoot) {
+        //left, mid, right로 쪼개기
+        System.out.print("Leaf(X)");
+        int mid = (int) Math.floor((m - 1) / 2.0);
+        int middleKey = node.getKey(mid);
+
+        //left child, right child
+        List<MyBPlusTreeNode> leftChildren = node.getSubChildren(0, mid);
+        List<MyBPlusTreeNode> rightChildren = node.getSubChildren(mid + 1, node.getChildrenLength() - 1);
+
+        //left node, right node
+        MyBPlusTreeNode leftNode = node.getSubNode(0, mid - 1);
+        MyBPlusTreeNode rightNode = node.getSubNode(mid + 1, node.getKeyListLength() - 1);
+        leftNode.setChildren(leftChildren);
+        rightNode.setChildren(rightChildren);
+
+        if (isRoot) {
+            System.out.print("Root(O)");
+            root = new MyBPlusTreeNode(middleKey, leftNode, rightNode);
+        } else {
+            System.out.print("Root(X)");
+            parent.deleteChild(node);
+            parent.addKey(middleKey);
+            parent.addChild(leftNode);
+            parent.addChild(rightNode);
+
+            if (parent.isOverflow(getMaxKeyCnt())) {
+                System.out.print("부모 노드는 overflow!\n 부모 상태:");
+                parent.tempShowInfos();
+                this.inorderTraverse();
+                splitNode(parent);
+            }
+        }
+    }
+
+    private void splitNode(MyBPlusTreeNode node) {
+        //단말 노드인 경우 B+Tree 쪼개던 방식으로
+        if (node.isLeaf()) {
+            splitLeafNode(node, node.getParent(), node == root);
         }
 
         //단말 노드가 아닌 경우 B-Tree 쪼개던 방식으로
         else {
-            //left, mid, right로 쪼개기
-            System.out.print("Leaf(X)");
-            mid = (int) Math.floor((m - 1) / 2.0);
-            middleKey = node.getKey(mid);
-
-            //left child, right child
-            List<MyBPlusTreeNode> leftChildren = node.getSubChildren(0, mid);
-            List<MyBPlusTreeNode> rightChildren = node.getSubChildren(mid + 1, node.getChildrenLength() - 1);
-
-            //left node, right node
-            leftNode = node.getSubNode(0, mid - 1);
-            rightNode = node.getSubNode(mid + 1, node.getKeyListLength() - 1);
-            leftNode.setChildren(leftChildren);
-            rightNode.setChildren(rightChildren);
-
-            if (isRoot) {
-                System.out.print("Root(O)");
-                root = new MyBPlusTreeNode(middleKey, leftNode, rightNode);
-            } else {
-                System.out.print("Root(X)");
-                parent.deleteChild(node);
-                parent.addKey(middleKey);
-                parent.addChild(leftNode);
-                parent.addChild(rightNode);
-
-                if (parent.isOverflow(getMaxKeyCnt())) {
-                    System.out.print("부모 노드는 overflow!\n 부모 상태:");
-                    parent.tempShowInfos();
-                    this.inorderTraverse();
-                    splitNode(parent);
-                }
-            }
+            splitNonLeafNode(node, node.getParent(), node == root);
         }
     }
 
@@ -241,7 +249,46 @@ public class MyBPlusTree implements NavigableSet<Integer> {
 
     @Override
     public boolean remove(Object o) {
-        // TODO Auto-generated method stub
+        Integer key = (Integer) o;
+
+        //빈 트리
+        if (root == null) {
+            return false;
+        }
+
+        //해당 키가 들어갈 노드를 찾기
+        MyBPlusTreeNode pointer = root;
+        while (!pointer.isLeaf()) {
+            pointer = pointer.findChildNode(key);
+        }
+
+        //없는 키에 대한 remove 요청이 들어오는 경우 삭제 실패
+        if (!pointer.hasKey(key)) {
+            return false;
+        }
+
+        //Node내에서 인덱스가 0이어서 타고 올라가 수정해줘야하는 경우
+        if (pointer.getKey(0) == key && pointer.getKeyListLength() >= 2) {
+            MyBPlusTreeNode parent = pointer.getParent();
+            while (parent != null) {
+                if (parent.hasKey(key)) {
+                    parent.updateKey(pointer.getKey(0), pointer.getKey(1));
+                    break;
+                }
+                parent = parent.getParent();
+            }
+        }
+
+        //삭제
+        pointer.removeKey(key);
+
+        //min key prop을 어기는 경우
+        if (pointer.isUnderflow(getMinKeyCnt())) {
+            //왼쪽, 오른쪽에서 가능하면 borrow
+
+            //안 되면 merge & recursive검증
+        }
+
         return false;
     }
 
