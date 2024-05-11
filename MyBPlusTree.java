@@ -270,8 +270,8 @@ public class MyBPlusTree implements NavigableSet<Integer> {
         return -1;
     }
 
-    private boolean borrowFromSibling(MyBPlusTreeNode pointer, MyBPlusTreeNode sibling, boolean isLeftSibling,
-                                      int delKey) {
+    private boolean borrowAtLeaf(MyBPlusTreeNode pointer, MyBPlusTreeNode sibling, boolean isLeftSibling,
+                                 int delKey) {
         if (sibling == null || sibling.getKeyListLength() - 1 < getMinKeyCnt()) {
             return false; //빌릴 수 없음
         }
@@ -374,14 +374,14 @@ public class MyBPlusTree implements NavigableSet<Integer> {
         MyBPlusTreeNode leftSibling = pointer.getParent().getLeftChild(pointer);
         MyBPlusTreeNode rightSibling = pointer.getParent().getRightChild(pointer);
         //1. 왼쪽에서 가능하면 borrow
-        boolean borrowResult = borrowFromSibling(pointer, leftSibling, true, pointerMinKey);
+        boolean borrowResult = borrowAtLeaf(pointer, leftSibling, true, pointerMinKey);
         if (borrowResult) {
             System.out.println("left borrow");
             return true;
         }
 
         //2. 오른쪽에서 가능하면 borrow
-        borrowResult = borrowFromSibling(pointer, rightSibling, false, pointerMinKey);
+        borrowResult = borrowAtLeaf(pointer, rightSibling, false, pointerMinKey);
         if (borrowResult) {
             System.out.println("right borrow");
             return true;
@@ -411,27 +411,15 @@ public class MyBPlusTree implements NavigableSet<Integer> {
 
         //1. 왼쪽에서 borrow
         MyBPlusTreeNode leftSibling = pointer.getParent().getLeftChild(pointer);
-        if (leftSibling != null && leftSibling.getKeyListLength() - 1 >= getMinKeyCnt()) {
-            //System.out.println("middle: leftSibling borrow");  //TODO : 이거 없애기!
-            int borrowKey = leftSibling.removeMaxKey();
-            int pointerIdx = pointer.getParent().getChildIdx(pointer);
-            int downKey = pointer.getParent().getKey(pointerIdx - 1);
-            pointer.getParent().changeKey(downKey, borrowKey);
-            pointer.addKey(downKey);
-            leftSibling.getMaxChild().changeParent(pointer);
+        boolean borrowResult = borrowAtInternal(pointer, leftSibling, true);
+        if (borrowResult) {
             return;
         }
 
         //2. 오른쪽에서 borrow
         MyBPlusTreeNode rightSibling = pointer.getParent().getRightChild(pointer);
-        if (rightSibling != null && rightSibling.getKeyListLength() - 1 >= getMinKeyCnt()) {
-            //System.out.println("middle: rightSibling borrow");  //TODO : 이거 없애기!
-            int borrowKey = rightSibling.removeMinKey();
-            int pointerIdx = pointer.getParent().getChildIdx(pointer);
-            int downKey = pointer.getParent().getKey(pointerIdx);
-            pointer.getParent().changeKey(downKey, borrowKey);
-            pointer.addKey(downKey);
-            rightSibling.getMinChild().changeParent(pointer);
+        borrowResult = borrowAtInternal(pointer, rightSibling, false);
+        if (borrowResult) {
             return;
         }
 
@@ -439,47 +427,9 @@ public class MyBPlusTree implements NavigableSet<Integer> {
         MyBPlusTreeNode parent = pointer.getParent();
         //왼쪽 merge
         if (leftSibling != null) {
-            //System.out.println("Middle : left merge");  //TODO : 이거 없애기!
-            int pointerIdx = parent.getChildIdx(pointer);
-            int parentValue = parent.removeKeyByIdx(pointerIdx - 1);
-
-            //parent의 가리키는 거 지우기
-            parent.removeChild(leftSibling);
-            parent.removeChild(pointer);
-            leftSibling.setParentNull();
-            pointer.setParentNull();
-
-            //merge한 노드 생성, 부모랑 잇기, leafnode랑 잇기
-            MyBPlusTreeNode merge = MyBPlusTreeNode.mergeNodes(parent, leftSibling, pointer);
-            merge.addKey(parentValue);
-            if (merge.getParent() == null || (merge.getParent().getParent() == null && merge.getParent().isEmpty())) {
-                root = merge;
-                merge.setParentNull();
-            } else {
-                merge.getParent().addChild(merge);
-            }
-            pointer = merge;
+            pointer = mergeInternalNodes(pointer, leftSibling, true);
         } else {
-            //System.out.println("Middle : right merge");  //TODO : 이거 없애기!
-            int pointerIdx = parent.getChildIdx(pointer);
-            int parentValue = parent.removeKeyByIdx(pointerIdx);
-
-            //parent의 가리키는 거 지우기
-            parent.removeChild(rightSibling);
-            parent.removeChild(pointer);
-            rightSibling.setParentNull();
-            pointer.setParentNull();
-
-            //merge한 노드 생성, 부모랑 잇기
-            MyBPlusTreeNode merge = MyBPlusTreeNode.mergeNodes(parent, pointer, rightSibling);
-            merge.addKey(parentValue);
-            if (merge.getParent() == null || (merge.getParent().getParent() == null && merge.getParent().isEmpty())) {
-                root = merge;
-                merge.setParentNull();
-            } else {
-                merge.getParent().addChild(merge);
-            }
-            pointer = merge;
+            pointer = mergeInternalNodes(pointer, rightSibling, false);
         }
         if (pointer.getParent() == null) {
             return;
@@ -487,6 +437,59 @@ public class MyBPlusTree implements NavigableSet<Integer> {
         if (pointer.getParent().isUnderflow(getMinKeyCnt())) {
             updateInternalNode(pointer.getParent());
         }
+    }
+
+    private boolean borrowAtInternal(MyBPlusTreeNode pointer, MyBPlusTreeNode sibling, boolean isLeftSibling) {
+        if (sibling == null || sibling.getKeyListLength() - 1 < getMinKeyCnt()) {
+            return false;
+        }
+
+        int borrowKey;
+        if (isLeftSibling) {
+            borrowKey = sibling.removeMaxKey();
+        } else {
+            borrowKey = sibling.removeMinKey();
+        }
+        int pointerIdx = pointer.getParent().getChildIdx(pointer);
+        int downKey = pointer.getParent().getKey(isLeftSibling ? pointerIdx - 1 : pointerIdx);
+        pointer.getParent().changeKey(downKey, borrowKey);
+        pointer.addKey(downKey);
+        if (isLeftSibling) {
+            sibling.getMaxChild().changeParent(pointer);
+        } else {
+            sibling.getMinChild().changeParent(pointer);
+        }
+
+        return true;
+    }
+
+    private MyBPlusTreeNode mergeInternalNodes(MyBPlusTreeNode pointer, MyBPlusTreeNode sibling, boolean isLeftMerge) {
+        MyBPlusTreeNode parent = pointer.getParent();
+
+        int pointerIdx = parent.getChildIdx(pointer);
+        int parentValue = parent.removeKeyByIdx(isLeftMerge ? pointerIdx - 1 : pointerIdx);
+
+        //parent의 가리키는 거 지우기
+        parent.removeChild(sibling);
+        parent.removeChild(pointer);
+        sibling.setParentNull();
+        pointer.setParentNull();
+
+        //merge한 노드 생성, 부모랑 잇기, leafnode랑 잇기
+        MyBPlusTreeNode merge;
+        if (isLeftMerge) {
+            merge = MyBPlusTreeNode.mergeNodes(parent, sibling, pointer);
+        } else {
+            merge = MyBPlusTreeNode.mergeNodes(parent, pointer, sibling);
+        }
+        merge.addKey(parentValue);
+        if (merge.getParent() == null || (merge.getParent().getParent() == null && merge.getParent().isEmpty())) {
+            root = merge;
+            merge.setParentNull();
+        } else {
+            merge.getParent().addChild(merge);
+        }
+        return merge;
     }
 
     @Override
