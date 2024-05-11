@@ -36,6 +36,23 @@ public class MyBPlusTreeNode {
         }
     }
 
+    private MyBPlusTreeNode(MyBPlusTreeNode parent, MyBPlusTreeNode node1, MyBPlusTreeNode node2) {
+        //node merge를 위한 생성자.
+        this.parent = parent;
+        this.keyList = new ArrayList<>();
+        if (!node1.keyList.isEmpty()) {
+            keyList.addAll(node1.keyList);
+        }
+        if (!node2.keyList.isEmpty()) {
+            keyList.addAll(node2.keyList);
+        }
+        this.children = new ArrayList<>();
+        children.addAll(node1.children);
+        children.addAll(node2.children);
+        node1.children.forEach(e -> e.parent = this);
+        node2.children.forEach(e -> e.parent = this);
+    }
+
     private MyBPlusTreeNode(int key) {
         //root 노드를 만들 때에만 사용하는 생성자
         this.parent = null;
@@ -48,7 +65,7 @@ public class MyBPlusTreeNode {
         return new MyBPlusTreeNode(key);
     }
 
-    public void deleteChild(MyBPlusTreeNode node) {
+    public void removeChild(MyBPlusTreeNode node) {
         if (this.children != null) {
             this.children.remove(node);
         }
@@ -174,13 +191,93 @@ public class MyBPlusTreeNode {
         return this.children.isEmpty();
     }
 
-    public void updateKey(int from, int to) {
+    public void changeKey(int from, int to) {
+        System.out.print("key : ");
+        this.showKeys();
+        System.out.println("from : " + from + " to : " + to);
         int index = Collections.binarySearch(keyList, from);
+        System.out.println("index:" + index);
         keyList.set(index, to);
     }
 
     public void removeKey(int key) {
-        keyList.remove(key);
+        keyList.remove(keyList.indexOf(key));
+    }
+
+    public int removeKeyByIdx(int idx) {
+        int value = keyList.get(idx);
+        keyList.remove(idx);
+        return value;
+    }
+
+    public int removeMaxKey() {
+        int ret = keyList.get(keyList.size() - 1);
+        keyList.remove(keyList.size() - 1);
+        return ret;
+    }
+
+    public int removeMinKey() {
+        int ret = keyList.get(0);
+        keyList.remove(0);
+        return ret;
+    }
+
+    public boolean isEmpty() {
+        return keyList.isEmpty();
+    }
+
+    public MyBPlusTreeNode getLeftChild(MyBPlusTreeNode baseChild) {
+        //baseChild를 기준으로 왼쪽 child 반환
+        int index = children.indexOf(baseChild);
+        if (index == 0) {
+            return null;
+        }
+        return children.get(index - 1);
+    }
+
+    public MyBPlusTreeNode getRightChild(MyBPlusTreeNode baseChild) {
+        //baseChild를 기준으로 오른쪽 child 반환
+        int index = children.indexOf(baseChild);
+        if (index == children.size() - 1) {
+            return null;
+        }
+        return children.get(index + 1);
+    }
+
+    public MyBPlusTreeNode getMinChild() {
+        return children.get(0);
+    }
+
+    public MyBPlusTreeNode getMaxChild() {
+        return children.get(children.size() - 1);
+    }
+
+    public void changeParent(MyBPlusTreeNode toParent) {
+        MyBPlusTreeNode fromParent = this.parent;
+
+        fromParent.removeChild(this);
+        toParent.addChild(this);
+        this.parent = toParent;
+    }
+
+    public int getMaxKey() {
+        return keyList.get(keyList.size() - 1);
+    }
+
+    public int getMinKey() {
+        return keyList.get(0);
+    }
+
+    public int getChildIdx(MyBPlusTreeNode child) {
+        return this.children.indexOf(child);
+    }
+
+    public static MyBPlusTreeNode mergeNodes(MyBPlusTreeNode parent, MyBPlusTreeNode n1, MyBPlusTreeNode n2) {
+        return new MyBPlusTreeNode(parent, n1, n2);
+    }
+
+    public void setParentNull() {
+        this.parent = null;
     }
 
     public void showKeys() {
