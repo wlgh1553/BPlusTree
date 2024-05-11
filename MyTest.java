@@ -90,6 +90,11 @@ public class MyTest {
             }
         });
 
+        list.forEach(e -> {
+            System.out.println(e + "삽입");
+            bpTree.add(e);
+        });
+
         //개인 검증용
         //아래는 min key prop을 어기지 않는 선에서 윗부분 update 해주는 삭제 시나리오
 //        bpTree.showTree();

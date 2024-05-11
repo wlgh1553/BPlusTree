@@ -77,6 +77,10 @@ public class MyBPlusTree implements NavigableSet<Integer> {
     }
 
     public void showTree() {
+        if (root == null) {
+            System.out.println("empty tree!");
+            return;
+        }
         root.tempShowInfos();
         System.out.print("leafList : ");
         this.inorderTraverse();
@@ -310,6 +314,12 @@ public class MyBPlusTree implements NavigableSet<Integer> {
 
         //root이면 끝
         if (pointer == root) {
+            if (pointer.isEmpty()) {
+                System.out.println("root라서 끝");
+                System.out.println("leafList:" + leafList.size());
+                leafList.clear();
+                root = null;
+            }
             return true;
         }
 
