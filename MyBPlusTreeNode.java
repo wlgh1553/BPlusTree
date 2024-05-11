@@ -192,11 +192,8 @@ public class MyBPlusTreeNode {
     }
 
     public void changeKey(int from, int to) {
-        System.out.print("key : ");
         this.showKeys();
-        System.out.println("from : " + from + " to : " + to);
         int index = Collections.binarySearch(keyList, from);
-        System.out.println("index:" + index);
         keyList.set(index, to);
     }
 
